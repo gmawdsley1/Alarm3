@@ -20,8 +20,7 @@
 * Also handles debouncing of inputs.
 */
 void checkInputs(){
-  byte index;
-
+  
   // Handle rollover properly
   if ((unsigned long)(millis() - lastTime) < DEBOUNCE){
     // Not enough time has passed to debounce
@@ -32,7 +31,7 @@ void checkInputs(){
   lastTime = millis();
 
   // Loop over all the buttons
-  for (index = 0; index < NUMINPUTS; index++) {
+  for (byte index = 0; index < NUMINPUTS; index++) {
 
     // Clear all previous flags
     justPressed[index] = 0;

@@ -28,49 +28,49 @@
 #include "MonitoringFunctions.h"
 #include "Sounds.h"
 #include "WatchdogFunctions.h"
-#include <WSWire.h> //A custom Wire library which has timeouts: https://github.com/steamfire/WSWireLib
+#include <Wire.h> //A custom Wire library which has timeouts: https://github.com/steamfire/WSWireLib
 
 // Begin Cellular Variables
-SerialGSM cell(10,11);
-int cellStatus = 0;
-boolean gotSMS = false;
-char lastSMS[160] = {0};
-char smsSender[13] = {0};
-int numTimeouts = 0;
+
+static int cellStatus = 0;
+static boolean gotSMS = false;
+static char lastSMS[160] = {0};
+static char smsSender[13] = {0};
+static int numTimeouts = 0;
 // End Cellular Variables
 
 
 // Begin I2C Variables
-byte wireResponseCode = 0;
-unsigned long lastI2CFailNotification = 0;
+static byte wireResponseCode = 0;
+static unsigned long lastI2CFailNotification = 0;
 #define I2C_FAIL_NOTIFICATION_PERIOD 21600000
-boolean wireFailureResponse = false;
+static boolean wireFailureResponse = false;
 // End I2C Variables
 
-Contact *contacts[CONTACTS_MAX_NUMBER];
-Input *inputs[NUMINPUTS];
+static Contact *contacts[CONTACTS_MAX_NUMBER];
+static Input *inputs[NUMINPUTS];
  
-byte previousState[NUMINPUTS];
-byte currentState[NUMINPUTS];
-long lastTime;
+static byte previousState[NUMINPUTS];
+static byte currentState[NUMINPUTS];
+static long lastTime;
 
-long lastContactsCheck = 0;
+static long lastContactsCheck = 0;
 //End Monitoring Variables
 
 // Alarm disable variables
-unsigned long alarmDisabledTime = 0;
-byte disabledHours = 0;
+static unsigned long alarmDisabledTime = 0;
+static byte disabledHours = 0;
 // End alarm disable variables
 
 
 
-byte pressed[NUMINPUTS], justPressed[NUMINPUTS], justReleased[NUMINPUTS];
+static byte pressed[NUMINPUTS], justPressed[NUMINPUTS], justReleased[NUMINPUTS];
 
-byte alarmStatus = 1; // 0 = Disabled, 1 = Enabled
+static byte alarmStatus = 1; // 0 = Disabled, 1 = Enabled
 // End Common Code
 
-unsigned long TimeResponded = 0;
-unsigned long AlCallRestartTime = 120000;
+static unsigned long TimeResponded = 0;
+static unsigned long AlCallRestartTime = 120000;
 
 
 
@@ -78,7 +78,7 @@ unsigned long AlCallRestartTime = 120000;
 void setup()
 {
   SetupWatchdog();
-
+  SerialGSM cell(10,11);
   Wire.begin();
   Serial.begin(9600); 
 
@@ -161,50 +161,6 @@ void setup()
   initializeGSMShield();
   bootGSMShield();
 
-  // Setup handler for SMS messages
-  //&&&&&&&&&&&&&&&&&&&&&&&&&& Error &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
-/* In file included from MegaMaster.ino:22:
-C:\Users\Mayan\Documents\Arduino\libraries\SerialGSM/SerialGSM.h:10: error: expected class-name before '{' token
-MegaMaster.ino: In function 'void setup()':
-MegaMaster:223: error: 'class SerialGSM' has no member named 'registerSMSCallback'
-MegaMaster.ino: In function 'void loop()':
-MegaMaster:383: error: 'TimeResponded' was not declared in this scope
-MegaMaster:383: error: 'AlCallRestartTime' was not declared in this scope
-ContactManagementFunctions.ino: In function 'void notifyContactsAlarmState(byte)':
-ContactManagementFunctions:114: error: could not convert 'cell.SerialGSM::Call(((char*)(& contacts[((int)i)]->Contact::phone)))' to 'bool'
-ContactManagementFunctions:114: error: in argument to unary !
-ContactManagementFunctions:121: error: could not convert 'cell.SerialGSM::Hangup()' to 'bool'
-ContactManagementFunctions:121: error: in argument to unary !
-ContactManagementFunctions:132: error: could not convert 'cell.SerialGSM::Hangup()' to 'bool'
-ContactManagementFunctions:132: error: in argument to unary !
-ContactManagementFunctions.ino: In function 'void notifyContactsAlarmStillNotAddressed(byte)':
-ContactManagementFunctions:168: error: invalid conversion from 'char' to 'const char*'
-c:/program files (x86)/arduino/hardware/tools/avr/lib/gcc/../../avr/include/string.h:134: error: too many arguments to function 'char* strncat(char*, const char*, size_t)'
-ContactManagementFunctions:168: error: at this point in file
-ContactManagementFunctions:170: error: invalid conversion from 'int' to 'const char*'
-ContactManagementFunctions:170: error: initializing argument 2 of 'char* strncat(char*, const char*, size_t)'
-ContactManagementFunctions:174: error: invalid conversion from 'char' to 'const char*'
-c:/program files (x86)/arduino/hardware/tools/avr/lib/gcc/../../avr/include/string.h:134: error: too many arguments to function 'char* strncat(char*, const char*, size_t)'
-ContactManagementFunctions:174: error: at this point in file
-ContactManagementFunctions:176: error: invalid conversion from 'int' to 'const char*'
-ContactManagementFunctions:176: error: initializing argument 2 of 'char* strncat(char*, const char*, size_t)'
-ContactManagementFunctions.ino: In function 'void notifyContactsSMS(byte, char*)':
-ContactManagementFunctions:246: error: could not convert 'cell.SerialGSM::DeleteAllSMS()' to 'bool'
-ContactManagementFunctions:246: error: in argument to unary !
-DiagnosticFunctions.ino: In function 'void checkGSMProblems()':
-DiagnosticFunctions:15: error: 'class SerialGSM' has no member named 'GetErrorCode'
-DiagnosticFunctions:17: error: 'class SerialGSM' has no member named 'GetErrorCode'
-GSMFunctions.ino: In function 'void initializeGSMShield()':
-GSMFunctions:11: error: 'class SerialGSM' has no member named 'begin'
-GSMFunctions.ino: In function 'void trySendSMS(char*, char*)':
-GSMFunctions:52: error: could not convert 'cell.SerialGSM::SendSMS(cellnumber, outmsg)' to 'bool'
-GSMFunctions:52: error: in argument to unary !
-GSMFunctions:56: error: could not convert 'cell.SerialGSM::SendSMS(cellnumber, outmsg)' to 'bool'
-GSMFunctions:56: error: in argument to unary !
-GSMFunctions.ino: In function 'void checkIncomingSMS()':
-GSMFunctions:152: error: could not convert 'cell.SerialGSM::DeleteAllSMS()' to 'bool'
-GSMFunctions:152: error: in argument to unary !
-*/
 // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
   cell.registerSMSCallback(onReceiveSMS);
 
@@ -366,49 +322,7 @@ void loop() {
 	// If someone has responded but it has been over the allotted time since the alarm has
 	// started to go off without being resolved. Send a text out to all that whoResponded has
 	// been unable to take care of the issue
-// &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&& Error &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
-/*
-In file included from MegaMaster.ino:22:
-C:\Users\Mayan\Documents\Arduino\libraries\SerialGSM/SerialGSM.h:10: error: expected class-name before '{' token
-MegaMaster.ino: In function 'void loop()':
-MegaMaster:382: error: 'TimeResponded' was not declared in this scope
-MegaMaster:382: error: 'AlCallRestartTime' was not declared in this scope
-ContactManagementFunctions.ino: In function 'void notifyContactsAlarmState(byte)':
-ContactManagementFunctions:114: error: could not convert 'cell.SerialGSM::Call(((char*)(& contacts[((int)i)]->Contact::phone)))' to 'bool'
-ContactManagementFunctions:114: error: in argument to unary !
-ContactManagementFunctions:121: error: could not convert 'cell.SerialGSM::Hangup()' to 'bool'
-ContactManagementFunctions:121: error: in argument to unary !
-ContactManagementFunctions:132: error: could not convert 'cell.SerialGSM::Hangup()' to 'bool'
-ContactManagementFunctions:132: error: in argument to unary !
-ContactManagementFunctions.ino: In function 'void notifyContactsAlarmStillNotAddressed(byte)':
-ContactManagementFunctions:168: error: invalid conversion from 'char' to 'const char*'
-c:/program files (x86)/arduino/hardware/tools/avr/lib/gcc/../../avr/include/string.h:134: error: too many arguments to function 'char* strncat(char*, const char*, size_t)'
-ContactManagementFunctions:168: error: at this point in file
-ContactManagementFunctions:170: error: invalid conversion from 'int' to 'const char*'
-ContactManagementFunctions:170: error: initializing argument 2 of 'char* strncat(char*, const char*, size_t)'
-ContactManagementFunctions:174: error: invalid conversion from 'char' to 'const char*'
-c:/program files (x86)/arduino/hardware/tools/avr/lib/gcc/../../avr/include/string.h:134: error: too many arguments to function 'char* strncat(char*, const char*, size_t)'
-ContactManagementFunctions:174: error: at this point in file
-ContactManagementFunctions:176: error: invalid conversion from 'int' to 'const char*'
-ContactManagementFunctions:176: error: initializing argument 2 of 'char* strncat(char*, const char*, size_t)'
-ContactManagementFunctions.ino: In function 'void notifyContactsSMS(byte, char*)':
-ContactManagementFunctions:246: error: could not convert 'cell.SerialGSM::DeleteAllSMS()' to 'bool'
-ContactManagementFunctions:246: error: in argument to unary !
-DiagnosticFunctions.ino: In function 'void checkGSMProblems()':
-DiagnosticFunctions:15: error: 'class SerialGSM' has no member named 'GetErrorCode'
-DiagnosticFunctions:17: error: 'class SerialGSM' has no member named 'GetErrorCode'
-GSMFunctions.ino: In function 'void initializeGSMShield()':
-GSMFunctions:11: error: 'class SerialGSM' has no member named 'begin'
-GSMFunctions.ino: In function 'void trySendSMS(char*, char*)':
-GSMFunctions:52: error: could not convert 'cell.SerialGSM::SendSMS(cellnumber, outmsg)' to 'bool'
-GSMFunctions:52: error: in argument to unary !
-GSMFunctions:56: error: could not convert 'cell.SerialGSM::SendSMS(cellnumber, outmsg)' to 'bool'
-GSMFunctions:56: error: in argument to unary !
-GSMFunctions.ino: In function 'void checkIncomingSMS()':
-GSMFunctions:152: error: could not convert 'cell.SerialGSM::DeleteAllSMS()' to 'bool'
-GSMFunctions:152: error: in argument to unary !
-	*/
-// &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+
 	
 	  if(((unsigned long) (millis() - TimeResponded) >= AlCallRestartTime) && justPressed[i]==0){
 		Serial.println("Although someone had taken responsibility for attending to the alarm, the alarm is still active 2 hours later. Group 1 will be called again until another person takes responsibility to address the alarm.");

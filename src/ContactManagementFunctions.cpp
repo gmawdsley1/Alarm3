@@ -14,7 +14,7 @@
 #include "ContactManagementFunctions.h"
 #include "MonitoringFunctions.h"
 #include "sounds.h"
-#include "WSWire.h"
+#include "Wire.h"
 #include "WatchdogFunctions.h"
 
 /**
@@ -22,7 +22,7 @@
 * Contacts are stored in the contacts array
 */
 
-byte numContacts=0;
+static byte numContacts=0;
 
 void loadAndValidateContacts(){
   // Calculate the maximum possible file size

@@ -13,7 +13,7 @@
 #include "CRC32.h"
 #include "ContactManagementFunctions.h"
 #include "MonitoringFunctions.h"
-#include <WSWire.h> //A custom Wire library which has timeouts: https://github.com/steamfire/WSWireLib
+#include "Wire.h" //A custom Wire library which has timeouts: https://github.com/steamfire/WSWireLib
 
 /**
 * Let the slave know an input has gone into alarm
